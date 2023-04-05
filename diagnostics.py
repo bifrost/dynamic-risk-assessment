@@ -17,12 +17,12 @@ test_data_path = os.path.join(config['test_data_path'])
 prod_deployment_path = os.path.join(config['prod_deployment_path'])
 
 ##################Function to get model predictions
-def model_predictions():
+def model_predictions(data_location = os.path.join(test_data_path, 'testdata.csv')):
     #read the deployed model and a test dataset, calculate predictions
     with open(os.path.join(prod_deployment_path, 'trainedmodel.pkl'), 'rb') as file:
         model = pickle.load(file)
 
-    df = pd.read_csv(os.path.join(test_data_path, 'testdata.csv'))
+    df = pd.read_csv(data_location)
 
     x = df.iloc[:,1:-1].values.reshape(-1, 3)
 
@@ -74,7 +74,8 @@ def outdated_packages_list():
     outdated = subprocess.check_output(['pip', 'list','--outdated']).decode("utf-8")
     df = pd.read_csv(StringIO(outdated), skiprows=1, sep=' +', engine='python')
     result = df.iloc[:,:-1].values
-    return result
+
+    return result.tolist()
 
 
 if __name__ == '__main__':

@@ -2,9 +2,8 @@ from flask import Flask, session, jsonify, request
 import pandas as pd
 import numpy as np
 import pickle
-import create_prediction_model
-import diagnosis 
-import predict_exited_from_saved_model
+from diagnostics import model_predictions, dataframe_summary, missing_data, execution_time, outdated_packages_list
+from scoring import score_model
 import json
 import os
 
@@ -15,36 +14,45 @@ app = Flask(__name__)
 app.secret_key = '1652d576-484a-49fd-913a-6879acfa6ba4'
 
 with open('config.json','r') as f:
-    config = json.load(f) 
+    config = json.load(f)
 
-dataset_csv_path = os.path.join(config['output_folder_path']) 
+dataset_csv_path = os.path.join(config['output_folder_path'])
 
 prediction_model = None
 
 
 #######################Prediction Endpoint
 @app.route("/prediction", methods=['POST','OPTIONS'])
-def predict():        
+def predict():
     #call the prediction function you created in Step 3
-    return #add return value for prediction outputs
+    y_pred = model_predictions(os.getcwd()+request.args.get('file_location'))
+    return json.dumps(y_pred.tolist()) #add return value for prediction outputs
 
 #######################Scoring Endpoint
 @app.route("/scoring", methods=['GET','OPTIONS'])
-def stats():        
+def scoring():
     #check the score of the deployed model
-    return #add return value (a single F1 score number)
+    score = score_model()
+    return json.dumps(score) #add return value (a single F1 score number)
 
 #######################Summary Statistics Endpoint
 @app.route("/summarystats", methods=['GET','OPTIONS'])
-def stats():        
+def summarystats():
     #check means, medians, and modes for each column
-    return #return a list of all calculated summary statistics
+    summary = dataframe_summary()
+    return json.dumps(summary) #return a list of all calculated summary statistics
 
 #######################Diagnostics Endpoint
 @app.route("/diagnostics", methods=['GET','OPTIONS'])
-def stats():        
+def diagnostics():
     #check timing and percent NA values
-    return #add return value for all diagnostics
+    result = {
+        'execution_time': execution_time(),
+        'missing_data': missing_data(),
+        'outdated_packages_list': outdated_packages_list()
+    }
 
-if __name__ == "__main__":    
+    return json.dumps(result) #add return value for all diagnostics
+
+if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000, debug=True, threaded=True)
