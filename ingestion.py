@@ -5,8 +5,6 @@ import json
 from datetime import datetime
 
 
-
-
 #############Load config.json and get input and output paths
 with open('config.json','r') as f:
     config = json.load(f)
@@ -24,34 +22,42 @@ def read_data(input_path, filenames):
         'exited'
         ])
 
+    stats = []
+
     for each_filename in filenames:
-        path = f'{input_path}/{each_filename}'
+        path = os.path.join(input_path, each_filename)
         df = pd.read_csv(path)
+        stats.append(len(df.index))
         result = result.append(df)
 
-    return result
+    return result, stats
 
-def clean_data(df):
-    return df.drop_duplicates()
+def write_records(fp, sourcelocation, filenames, stats):
+    dateTimeObj = datetime.now()
+    now = str(dateTimeObj.year)+ '/'+str(dateTimeObj.month)+ '/'+str(dateTimeObj.day)
 
+    for i, _ in enumerate(filenames):
+        record = [sourcelocation, filenames[i], stats[i], now]
+        record = " ".join([str(o) for o in record])
+        fp.write(record+'\n')
 
 #############Function for data ingestion
 def merge_multiple_dataframe():
     #check for datasets, compile them together, and write to an output file
-    output_path = f'{os.getcwd()}/{output_folder_path}'
+    output_path = os.path.join(output_folder_path)
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
-    input_path = f'{os.getcwd()}/{input_folder_path}'
+    input_path = os.path.join(input_folder_path)
     filenames = [f for f in os.listdir(input_path) if f.endswith('.csv')]
 
-    result = read_data(input_path, filenames)
-    result = clean_data(result)
+    result, stats = read_data(input_path, filenames)
+    result = result.drop_duplicates()
 
-    result.to_csv(f'{output_path}/finaldata.csv', index=False)
+    result.to_csv(os.path.join(output_path, 'finaldata.csv'), index=False)
 
-    with open(f'{output_path}/ingestedfiles.txt', 'w') as fp:
-        fp.write("\n".join(str(item) for item in filenames))
+    with open(os.path.join(output_path, 'ingestedfiles.txt'), 'w') as fp:
+        write_records(fp, input_path, filenames, stats)
 
 if __name__ == '__main__':
     merge_multiple_dataframe()
