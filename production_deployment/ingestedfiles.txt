@@ -1,2 +1,0 @@
-practicedata dataset1.csv 17 2023/4/5
-practicedata dataset2.csv 19 2023/4/5
