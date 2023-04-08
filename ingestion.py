@@ -12,15 +12,7 @@ with open('config.json','r') as f:
 input_folder_path = config['input_folder_path']
 output_folder_path = config['output_folder_path']
 
-def read_data(input_path, filenames):
-
-    result = pd.DataFrame(columns=[
-        'corporation',
-        'lastmonth_activity',
-        'lastyear_activity',
-        'number_of_employees',
-        'exited'
-        ])
+def read_data(input_path, filenames, result):
 
     stats = []
 
@@ -42,22 +34,29 @@ def write_records(fp, sourcelocation, filenames, stats):
         fp.write(record+'\n')
 
 #############Function for data ingestion
-def merge_multiple_dataframe():
+def merge_multiple_dataframe(input_folder_path, output_folder_path, append_data):
     #check for datasets, compile them together, and write to an output file
-    output_path = os.path.join(output_folder_path)
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
+    if not os.path.exists(output_folder_path):
+        os.makedirs(output_folder_path)
 
-    input_path = os.path.join(input_folder_path)
-    filenames = [f for f in os.listdir(input_path) if f.endswith('.csv')]
+    output_file_path = os.path.join(output_folder_path, 'finaldata.csv')
+    filenames = [f for f in os.listdir(input_folder_path) if f.endswith('.csv')]
+    ingested_file_path = os.path.join(output_folder_path, 'ingestedfiles.txt')
 
-    result, stats = read_data(input_path, filenames)
+    if append_data == True:
+        mode = 'a'
+        df = pd.read_csv(output_file_path)
+    else:
+        mode = 'w'
+        df = pd.DataFrame(columns=['corporation', 'lastmonth_activity', 'lastyear_activity',  'number_of_employees', 'exited'])
+
+    result, stats = read_data(input_folder_path, filenames, df)
     result = result.drop_duplicates()
 
-    result.to_csv(os.path.join(output_path, 'finaldata.csv'), index=False)
+    result.to_csv(output_file_path, index=False)
 
-    with open(os.path.join(output_path, 'ingestedfiles.txt'), 'w') as fp:
-        write_records(fp, input_path, filenames, stats)
+    with open(ingested_file_path, mode) as fp:
+        write_records(fp, input_folder_path, filenames, stats)
 
 if __name__ == '__main__':
-    merge_multiple_dataframe()
+    merge_multiple_dataframe(input_folder_path, output_folder_path, False)

@@ -12,14 +12,14 @@ from io import StringIO
 with open('config.json','r') as f:
     config = json.load(f)
 
-dataset_csv_path = os.path.join(config['output_folder_path'])
+output_folder_path = os.path.join(config['output_folder_path'])
 test_data_path = os.path.join(config['test_data_path'])
 prod_deployment_path = os.path.join(config['prod_deployment_path'])
 
 ##################Function to get model predictions
-def model_predictions(data_location = os.path.join(test_data_path, 'testdata.csv')):
+def model_predictions(model_path, data_location):
     #read the deployed model and a test dataset, calculate predictions
-    with open(os.path.join(prod_deployment_path, 'trainedmodel.pkl'), 'rb') as file:
+    with open(os.path.join(model_path, 'trainedmodel.pkl'), 'rb') as file:
         model = pickle.load(file)
 
     df = pd.read_csv(data_location)
@@ -31,17 +31,17 @@ def model_predictions(data_location = os.path.join(test_data_path, 'testdata.csv
     return y_pred #return value should be a list containing all predictions
 
 ##################Function to get summary statistics
-def dataframe_summary():
+def dataframe_summary(data_location):
     #calculate summary statistics here
-    df = pd.read_csv(os.path.join(dataset_csv_path, 'finaldata.csv'))
+    df = pd.read_csv(os.path.join(data_location, 'finaldata.csv'))
     x = df.iloc[:,1:-1]
 
     result = np.array([x.mean(), x.median(), x.std()]).flatten().tolist()
     return result #return value should be a list containing all summary statistics
 
-def missing_data():
+def missing_data(data_location):
     #calculate what percent of each column consists of NA values
-    df = pd.read_csv(os.path.join(dataset_csv_path, 'finaldata.csv'))
+    df = pd.read_csv(os.path.join(data_location, 'finaldata.csv'))
     x = df.iloc[:,1:-1]
 
     nas = list(x.isna().sum())
@@ -79,14 +79,10 @@ def outdated_packages_list():
 
 
 if __name__ == '__main__':
-    model_predictions()
-    dataframe_summary()
-    missing_data()
+    data_location = os.path.join(test_data_path, 'testdata.csv')
+    model_predictions(prod_deployment_path, data_location)
+    dataframe_summary(output_folder_path)
+    missing_data(output_folder_path)
     execution_time()
     outdated_packages_list()
-
-
-
-
-
 

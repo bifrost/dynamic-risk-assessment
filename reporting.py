@@ -14,19 +14,17 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 with open('config.json','r') as f:
     config = json.load(f)
 
-dataset_csv_path = os.path.join(config['output_folder_path'])
-test_data_path = os.path.join(config['test_data_path'])
-prod_deployment_path = os.path.join(config['prod_deployment_path'])
-model_path = os.path.join(config['output_model_path'])
+test_data_path = config['test_data_path']
+output_model_path = config['output_model_path']
 
 ##############Function for reporting
-def score_model():
+def generate_report(model_path, data_location):
     #calculate a confusion matrix using the test data and the deployed model
     #write the confusion matrix to the workspace
-    with open(os.path.join(prod_deployment_path, 'trainedmodel.pkl'), 'rb') as file:
+    with open(os.path.join(model_path, 'trainedmodel.pkl'), 'rb') as file:
         model = pickle.load(file)
 
-    df = pd.read_csv(os.path.join(test_data_path, 'testdata.csv'))
+    df = pd.read_csv(data_location)
 
     x = df.iloc[:,1:-1].values.reshape(-1, 3)
     y = df.iloc[:,-1:].values.reshape(-1, 1).ravel()
@@ -43,4 +41,5 @@ def score_model():
 
 
 if __name__ == '__main__':
-    score_model()
+    data_location = os.path.join(test_data_path, 'testdata.csv')
+    generate_report(output_model_path, data_location)

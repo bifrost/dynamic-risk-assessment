@@ -16,30 +16,31 @@ app.secret_key = '1652d576-484a-49fd-913a-6879acfa6ba4'
 with open('config.json','r') as f:
     config = json.load(f)
 
-dataset_csv_path = os.path.join(config['output_folder_path'])
-
-prediction_model = None
-
+output_folder_path = os.path.join(config['output_folder_path'])
+test_data_path = os.path.join(config['test_data_path'])
+prod_deployment_path = os.path.join(config['prod_deployment_path'])
 
 #######################Prediction Endpoint
 @app.route("/prediction", methods=['POST','OPTIONS'])
 def predict():
     #call the prediction function you created in Step 3
-    y_pred = model_predictions(os.getcwd()+request.args.get('file_location'))
+    data_location = os.getcwd()+request.args.get('file_location')
+    y_pred = model_predictions(prod_deployment_path, data_location)
     return json.dumps(y_pred.tolist()) #add return value for prediction outputs
 
 #######################Scoring Endpoint
 @app.route("/scoring", methods=['GET','OPTIONS'])
 def scoring():
     #check the score of the deployed model
-    score = score_model()
+    data_location = os.path.join(test_data_path, 'testdata.csv')
+    score = score_model(prod_deployment_path, data_location)
     return json.dumps(score) #add return value (a single F1 score number)
 
 #######################Summary Statistics Endpoint
 @app.route("/summarystats", methods=['GET','OPTIONS'])
 def summarystats():
     #check means, medians, and modes for each column
-    summary = dataframe_summary()
+    summary = dataframe_summary(output_folder_path)
     return json.dumps(summary) #return a list of all calculated summary statistics
 
 #######################Diagnostics Endpoint
@@ -48,7 +49,7 @@ def diagnostics():
     #check timing and percent NA values
     result = {
         'execution_time': execution_time(),
-        'missing_data': missing_data(),
+        'missing_data': missing_data(output_folder_path),
         'outdated_packages_list': outdated_packages_list()
     }
 
