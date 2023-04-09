@@ -7,6 +7,7 @@ import json
 import pickle
 import subprocess
 from io import StringIO
+from data_util import get_features_target, load_model
 
 ##################Load config.json and get environment variables
 with open('config.json','r') as f:
@@ -19,14 +20,13 @@ prod_deployment_path = os.path.join(config['prod_deployment_path'])
 ##################Function to get model predictions
 def model_predictions(model_path, data_location):
     #read the deployed model and a test dataset, calculate predictions
-    with open(os.path.join(model_path, 'trainedmodel.pkl'), 'rb') as file:
-        model = pickle.load(file)
+    model = load_model(model_path)
 
     df = pd.read_csv(data_location)
 
-    x = df.iloc[:,1:-1].values.reshape(-1, 3)
+    df_x, _ = get_features_target(df)
 
-    y_pred = model.predict(x)
+    y_pred = model.predict(df_x)
 
     return y_pred #return value should be a list containing all predictions
 
@@ -34,19 +34,17 @@ def model_predictions(model_path, data_location):
 def dataframe_summary(data_location):
     #calculate summary statistics here
     df = pd.read_csv(os.path.join(data_location, 'finaldata.csv'))
-    x = df.iloc[:,1:-1]
 
-    result = np.array([x.mean(), x.median(), x.std()]).flatten().tolist()
+    result = df.agg(["mean", "median", "std"]).values.flatten().tolist()
     return result #return value should be a list containing all summary statistics
 
 def missing_data(data_location):
     #calculate what percent of each column consists of NA values
     df = pd.read_csv(os.path.join(data_location, 'finaldata.csv'))
-    x = df.iloc[:,1:-1]
+    df_x, _ = get_features_target(df)
 
-    nas = list(x.isna().sum())
-    result = [nas[i]/len(x.index) for i in range(len(nas))]
-    return result
+    result = df_x.isna().sum() / df_x.shape[0]
+    return result.values.tolist()
 
 ##################Function to get timings
 def ingestion_timing():
