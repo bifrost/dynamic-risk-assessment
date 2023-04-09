@@ -14,23 +14,23 @@ def run_diagnostics(model_path):
 
     #Call each API endpoint and store the responses
     curl_command = f'curl -X POST {URL}prediction?file_location=/testdata/testdata.csv'
-    response1 = subprocess.run(curl_command.split(), capture_output=True).stdout
+    prediction = subprocess.run(curl_command.split(), capture_output=True).stdout
 
     curl_command = f'curl {URL}scoring'
-    response2 = subprocess.run(curl_command.split(), capture_output=True).stdout
+    scoring = subprocess.run(curl_command.split(), capture_output=True).stdout
 
     curl_command = f'curl {URL}summarystats'
-    response3 = subprocess.run(curl_command.split(), capture_output=True).stdout
+    summarystats = subprocess.run(curl_command.split(), capture_output=True).stdout
 
     curl_command = f'curl {URL}diagnostics'
-    response4 = subprocess.run(curl_command.split(), capture_output=True).stdout
+    diagnostics = subprocess.run(curl_command.split(), capture_output=True).stdout
 
     #combine all API responses
     responses = {
-        'response1': json.loads(response1),
-        'response2': json.loads(response2),
-        'response3': json.loads(response3),
-        'response4': json.loads(response4)
+        'prediction': json.loads(prediction),
+        'scoring': json.loads(scoring),
+        'summarystats': json.loads(summarystats),
+        'diagnostics': json.loads(diagnostics)
     } #combine reponses here
 
     #write the responses to your workspace

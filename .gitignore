@@ -4,3 +4,5 @@ production_deployment
 practice_deployment
 models
 __pycache__/
+.env
+*.py[cod]
