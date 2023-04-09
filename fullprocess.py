@@ -31,6 +31,7 @@ ingested_file_path = os.path.join(prod_deployment_path, 'ingestedfiles.txt')
 latest_score_path = os.path.join(prod_deployment_path, 'latestscore.txt')
 final_data_path = os.path.join(output_folder_path, 'finaldata.csv')
 test_data_file = os.path.join(test_data_path, 'testdata.csv')
+retrain_model_test_data_file = os.path.join(output_model_path, 'test.csv')
 
 def process_automation():
 # Precess automation
@@ -62,7 +63,7 @@ def process_automation():
     logging.info('Checking for model drift')
 
     logging.info('Data Ingestion')
-    merge_multiple_dataframe(input_folder_path, output_folder_path, False)
+    merge_multiple_dataframe(input_folder_path, output_folder_path)
 
     logging.info('Read old model score')
     try:
@@ -94,9 +95,8 @@ def process_automation():
     train_model(output_model_path, output_folder_path)
 
     logging.info('Score model')
-    # we need a new score - but what test data should be used?
-    # testdata.csv is old data and finaldata.csv has been used for training!!!
-    score_model(output_model_path, final_data_path)
+    # we need a new score - for that purpose we use the test data from re-training
+    score_model(output_model_path, retrain_model_test_data_file)
 
     ##################Re-deployment
     #if you found evidence for model drift, re-run the deployment.py script
@@ -112,9 +112,8 @@ def process_automation():
     run_diagnostics(output_model_path)
 
     logging.info('Generate report')
-    # What data should be used?
-    # testdata.csv is old data and finaldata.csv has been used for training!!!
-    generate_report(output_model_path, test_data_file)
+   # The generate report will use the test data from re-training
+    generate_report(output_model_path, retrain_model_test_data_file)
 
 
 if __name__ == '__main__':
