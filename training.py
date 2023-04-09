@@ -23,9 +23,10 @@ def train_model(model_path, data_location):
         os.makedirs(model_path)
 
     df = pd.read_csv(os.path.join(data_location, 'finaldata.csv'))
+    train, test = train_test_split(df, test_size=0.2, random_state=0)
 
-    x = df.iloc[:,1:-1].values.reshape(-1, 3)
-    y = df.iloc[:,-1:].values.reshape(-1, 1).ravel()
+    df_y = train['exited']
+    df_x = train.drop(columns=['corporation', 'exited'])
 
     #use this logistic regression for training
     model = LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
@@ -35,11 +36,15 @@ def train_model(model_path, data_location):
                     warm_start=False)
 
     #fit the logistic regression to your data
-    model.fit(x, y)
+    model.fit(df_x, df_y)
 
     #write the trained model to your workspace in a file called trainedmodel.pkl
     with open(os.path.join(model_path, 'trainedmodel.pkl'), 'wb') as file:
         pickle.dump(model, file)
+
+    # save train and test data in the model path
+    train.to_csv(os.path.join(model_path, 'train.csv'), index=False)
+    test.to_csv(os.path.join(model_path, 'test.csv'), index=False)
 
     # looks like we need it for the submission
     shutil.copy(os.path.join(data_location, 'finaldata.csv'), os.path.join(model_path, 'finaldata.csv'))

@@ -21,10 +21,6 @@ def read_data(input_path):
 
     return result, filenames, stats
 
-def clean_data(df):
-    df = df.drop(columns=['corporation'])
-    return df.drop_duplicates()
-
 def write_records(fp, sourcelocation, filenames, stats):
     dateTimeObj = datetime.now()
     now = str(dateTimeObj.year)+ '/'+str(dateTimeObj.month)+ '/'+str(dateTimeObj.day)
@@ -47,7 +43,7 @@ def merge_multiple_dataframe(input_folder_path, output_folder_path):
 
     result, filenames, stats = read_data(input_folder_path)
 
-    result = clean_data(result)
+    result = result.drop_duplicates()
 
     result.to_csv(output_file_path, index=False)
 
