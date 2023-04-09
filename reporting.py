@@ -8,7 +8,7 @@ import seaborn as sns
 import json
 import os
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-
+from data_util import get_features_target, load_model
 
 ###############Load config.json and get path variables
 with open('config.json','r') as f:
@@ -21,20 +21,13 @@ output_model_path = config['output_model_path']
 def generate_report(model_path, data_location):
     #calculate a confusion matrix using the test data and the deployed model
     #write the confusion matrix to the workspace
-    with open(os.path.join(model_path, 'trainedmodel.pkl'), 'rb') as file:
-        model = pickle.load(file)
+    model = load_model(model_path)
 
     df = pd.read_csv(data_location)
+    df_x, df_y = get_features_target(df)
 
-    x = df.iloc[:,1:-1].values.reshape(-1, 3)
-    y = df.iloc[:,-1:].values.reshape(-1, 1).ravel()
-
-    # Note: depricated
-    #cm = metrics.plot_confusion_matrix(model, x, y)
-    #plt.savefig(os.path.join(model_path, 'confusionmatrix.png'))
-
-    y_pred = model.predict(x)
-    cm =  confusion_matrix(y, y_pred)
+    y_pred = model.predict(df_x)
+    cm =  confusion_matrix(df_y, y_pred)
     disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=model.classes_)
     fig = disp.plot()
     plt.savefig(os.path.join(model_path, 'confusionmatrix.png'), dpi=300)
