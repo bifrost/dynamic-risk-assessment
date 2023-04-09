@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 import json
 import shutil
+from data_util import get_features_target
 
 ###################Load config.json and get path variables
 with open('config.json','r') as f:
@@ -25,8 +26,7 @@ def train_model(model_path, data_location):
     df = pd.read_csv(os.path.join(data_location, 'finaldata.csv'))
     train, test = train_test_split(df, test_size=0.2, random_state=0)
 
-    df_y = train['exited']
-    df_x = train.drop(columns=['corporation', 'exited'])
+    df_x, df_y = get_features_target(train)
 
     #use this logistic regression for training
     model = LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
