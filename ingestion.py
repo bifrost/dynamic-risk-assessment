@@ -3,7 +3,7 @@ import numpy as np
 import os
 import json
 from datetime import datetime
-
+import glob
 
 #############Load config.json and get input and output paths
 with open('config.json','r') as f:
@@ -12,17 +12,18 @@ with open('config.json','r') as f:
 input_folder_path = config['input_folder_path']
 output_folder_path = config['output_folder_path']
 
-def read_data(input_path, filenames, result):
+def read_data(input_path):
 
-    stats = []
+    filenames = glob.glob(f'{input_path}/*.csv')
+    datasets = list(map(pd.read_csv, filenames))
+    stats = [len(ds) for ds in datasets]
+    result = pd.concat(datasets)
 
-    for each_filename in filenames:
-        path = os.path.join(input_path, each_filename)
-        df = pd.read_csv(path)
-        stats.append(len(df.index))
-        result = result.append(df)
+    return result, filenames, stats
 
-    return result, stats
+def clean_data(df):
+    df = df.drop(columns=['corporation'])
+    return df.drop_duplicates()
 
 def write_records(fp, sourcelocation, filenames, stats):
     dateTimeObj = datetime.now()
@@ -34,29 +35,24 @@ def write_records(fp, sourcelocation, filenames, stats):
         fp.write(record+'\n')
 
 #############Function for data ingestion
-def merge_multiple_dataframe(input_folder_path, output_folder_path, append_data):
+def merge_multiple_dataframe(input_folder_path, output_folder_path):
     #check for datasets, compile them together, and write to an output file
     if not os.path.exists(output_folder_path):
         os.makedirs(output_folder_path)
 
     output_file_path = os.path.join(output_folder_path, 'finaldata.csv')
-    filenames = [f for f in os.listdir(input_folder_path) if f.endswith('.csv')]
     ingested_file_path = os.path.join(output_folder_path, 'ingestedfiles.txt')
 
-    if append_data == True:
-        mode = 'a'
-        df = pd.read_csv(output_file_path)
-    else:
-        mode = 'w'
-        df = pd.DataFrame(columns=['corporation', 'lastmonth_activity', 'lastyear_activity',  'number_of_employees', 'exited'])
+    #['corporation', 'lastmonth_activity', 'lastyear_activity',  'number_of_employees', 'exited']
 
-    result, stats = read_data(input_folder_path, filenames, df)
-    result = result.drop_duplicates()
+    result, filenames, stats = read_data(input_folder_path)
+
+    result = clean_data(result)
 
     result.to_csv(output_file_path, index=False)
 
-    with open(ingested_file_path, mode) as fp:
+    with open(ingested_file_path, 'w') as fp:
         write_records(fp, input_folder_path, filenames, stats)
 
 if __name__ == '__main__':
-    merge_multiple_dataframe(input_folder_path, output_folder_path, False)
+    merge_multiple_dataframe(input_folder_path, output_folder_path)
